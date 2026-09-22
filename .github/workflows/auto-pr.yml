@@ -1,0 +1,31 @@
+name: Auto-create pull request
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - stage
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  create-pr:
+    if: ${{ github.ref_type == 'branch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open or reuse pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          BASE=main
+          if gh api "repos/${REPO}/branches/stage" >/dev/null 2>&1; then BASE=stage; fi
+          existing=$(gh pr list --repo "$REPO" --head "$BRANCH" --base "$BASE" --state open --json number --jq 'length')
+          if [ "$existing" -gt 0 ]; then exit 0; fi
+          gh pr create --repo "$REPO" --head "$BRANCH" --base "$BASE" \
+            --title "Merge ${BRANCH} into ${BASE}" \
+            --body "Automatically opened for feature branch ${BRANCH}. Review and merge this pull request into ${BASE}."
