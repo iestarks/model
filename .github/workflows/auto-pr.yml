@@ -4,7 +4,6 @@ on:
   push:
     branches-ignore:
       - main
-      - stage
 
 permissions:
   contents: read
@@ -22,8 +21,9 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          BASE=main
-          if gh api "repos/${REPO}/branches/stage" >/dev/null 2>&1; then BASE=stage; fi
+          BASE=stage
+          if [ "$BRANCH" = "stage" ]; then BASE=main; fi
+          if [ "$BASE" = "stage" ] && ! gh api "repos/${REPO}/branches/stage" >/dev/null 2>&1; then BASE=main; fi
           existing=$(gh pr list --repo "$REPO" --head "$BRANCH" --base "$BASE" --state open --json number --jq 'length')
           if [ "$existing" -gt 0 ]; then exit 0; fi
           gh pr create --repo "$REPO" --head "$BRANCH" --base "$BASE" \
