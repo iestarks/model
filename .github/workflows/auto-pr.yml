@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Open or reuse pull request
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTO_PR_TOKEN }}
           BRANCH: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
         run: |
